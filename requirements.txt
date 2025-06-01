@@ -1,0 +1,6 @@
+#notebook update
+#notebook==7.0.6
+#これを入れないとnotebookでtqdmが表示エラーになる
+ipywidgets==8.0.6
+#その他
+wandb==0.12.9
