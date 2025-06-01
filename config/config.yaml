@@ -1,0 +1,10 @@
+seed: 42
+data_csv_path: data/train.csv
+target_col: label
+model_name: resnet18
+num_classes: 5
+batch_size: 32
+lr: 1e-4
+epochs: 10
+n_folds: 5
+wandb_project: my_project

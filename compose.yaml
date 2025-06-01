@@ -1,0 +1,18 @@
+services:
+  aptos2025:
+    build: .
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    shm_size: '8gb'
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    ports:
+      - "8888:8888"
+    tty: true
+    stdin_open: true
