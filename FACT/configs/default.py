@@ -8,15 +8,15 @@ _C.aux.gpu = 1
 _C.aux.mark = "" # for adding addtional note
 _C.aux.runid = 0 # the X-th run of this configuration
 _C.aux.debug = False
-_C.aux.wandb_project = "FACT"
+_C.aux.wandb_project = "APTOS2025"
 _C.aux.wandb_user = ""
 _C.aux.wandb_offline = False
 _C.aux.resume = "max" # "", ckpt_path, "max" (resume latest ckpt of the experiment)
-_C.aux.eval_every = 1000
-_C.aux.print_every = 200
+_C.aux.eval_every = 2000
+_C.aux.print_every = 1000
 
 # dataset
-_C.dataset = "breakfast"
+_C.dataset = "APTOS2025"
 _C.split = "split1"
 _C.sr = 1 # temporal down-sample rate
 _C.eval_bg = False # if including background frame in evaluation
@@ -34,12 +34,12 @@ _C.average_transcript_len = 0.0 # average number of segments in
 
 # training
 _C.batch_size = 4
-_C.optimizer = "SGD"
-_C.epoch = 2
-_C.lr = 0.1
-_C.lr_decay = -1
-_C.momentum = 0.009
-_C.weight_decay = 0.000
+_C.optimizer = "Adam"
+_C.epoch = 100
+_C.lr = 0.0001
+_C.lr_decay = 80
+_C.momentum = 0
+_C.weight_decay = 0.0
 _C.clip_grad_norm = 10.0
 
 #########################

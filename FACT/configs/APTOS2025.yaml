@@ -42,7 +42,7 @@ FACT:
   block: iuUU
   cmr: 0.3
   fpos: false
-  ntoken: 60
+  ntoken: 40
   trans: false
   mwt: 0.1
 Loss:
@@ -69,6 +69,7 @@ aux:
 batch_size: 4
 clip_grad_norm: 10.0
 dataset: APTOS2025
+bg_class: null
 eval_bg: true
 epoch: 150
 lr: 0.0001

@@ -189,11 +189,11 @@ def create_dataset(cfg: CfgNode):
         groundTruth_path = os.path.join(dataset_path, 'groundTruth')
 
     else: # if dataset data is not defined here, try reading from the config file
-        map_fname = cfg.map_fname
-        feature_path = cfg.feature_path
-        groundTruth_path = cfg.groundTruth_path
-        train_split_fname = os.path.join(cfg.split_path, f'train.{cfg.split}.bundle')
-        test_split_fname = os.path.join(cfg.split_path, f'test.{cfg.split}.bundle')
+        map_fname = BASE + f'data/{cfg.dataset}/mapping.txt'
+        dataset_path = BASE + f'data/{cfg.dataset}/'
+        feature_path = BASE + f'data/{cfg.dataset}/features/'
+        train_split_fname = BASE + f'data/{cfg.dataset}/%s.train' % cfg.split
+        test_split_fname = BASE + f'data/{cfg.dataset}/%s.test' % cfg.split
         feature_transpose = cfg.feature_transpose
         bg_class = cfg.bg_class if isinstance(cfg.bg_class, list) else [cfg.bg_class]
         average_transcript_len = cfg.average_transcript_len

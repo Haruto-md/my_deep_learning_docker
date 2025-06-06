@@ -5,7 +5,7 @@ import gzip
 from .utils import expand_frame_label, parse_label, easy_reduce
 
 def levenstein(p, y, norm=False):
-    m_row = len(p)    
+    m_row = len(p)
     n_col = len(y)
     D = np.zeros([m_row+1, n_col+1], np.float64)
     for i in range(m_row+1):
@@ -21,7 +21,7 @@ def levenstein(p, y, norm=False):
                 D[i, j] = min(D[i-1, j] + 1,
                               D[i, j-1] + 1,
                               D[i-1, j-1] + 1)
-    
+
     if norm:
         score = (1 - D[-1, -1]/max(m_row, n_col)) * 100
     else:
@@ -41,30 +41,30 @@ def edit_score(pred_segs, gt_segs, norm=True, bg_class=["background"]):
     Y, _, _ = segs_to_labels_start_end_time(gt_segs, bg_class)
     return levenstein(P, Y, norm)
 
-def f_score(pred_segs, gt_segs, overlap, bg_class=["background"]):
-    p_label, p_start, p_end = segs_to_labels_start_end_time(pred_segs, bg_class)
-    y_label, y_start, y_end = segs_to_labels_start_end_time(gt_segs, bg_class)
+# def f_score(pred_segs, gt_segs, overlap, bg_class=["background"]):
+#     p_label, p_start, p_end = segs_to_labels_start_end_time(pred_segs, bg_class)
+#     y_label, y_start, y_end = segs_to_labels_start_end_time(gt_segs, bg_class)
 
-    tp = 0
-    fp = 0
+#     tp = 0
+#     fp = 0
 
-    hits = np.zeros(len(y_label))
+#     hits = np.zeros(len(y_label))
 
-    for j in range(len(p_label)):
-        intersection = np.minimum(p_end[j], y_end) - np.maximum(p_start[j], y_start)
-        union = np.maximum(p_end[j], y_end) - np.minimum(p_start[j], y_start)
-        IoU = (1.0*intersection / union)*([p_label[j] == y_label[x] for x in range(len(y_label))])
-        idx = np.array(IoU).argmax()
+#     for j in range(len(p_label)):
+#         intersection = np.minimum(p_end[j], y_end) - np.maximum(p_start[j], y_start)
+#         union = np.maximum(p_end[j], y_end) - np.minimum(p_start[j], y_start)
+#         IoU = (1.0*intersection / union)*([p_label[j] == y_label[x] for x in range(len(y_label))])
+#         idx = np.array(IoU).argmax()
 
-        if IoU[idx] >= overlap and not hits[idx]:
-            tp += 1
-            hits[idx] = 1
-        else:
-            fp += 1
+#         if IoU[idx] >= overlap and not hits[idx]:
+#             tp += 1
+#             hits[idx] = 1
+#         else:
+#             fp += 1
 
-    fn = len(y_label) - sum(hits)
+#     fn = len(y_label) - sum(hits)
 
-    return float(tp), float(fp), float(fn)
+#     return float(tp), float(fp), float(fn)
 
 
 class Video():
@@ -81,7 +81,7 @@ class Video():
         return "< Video %s >" % self.vname
 
 class Checkpoint():
-    def __init__(self, iteration, bg_class=[], eval_edit=True):
+    def __init__(self, iteration, bg_class=[], eval_edit=False):
         self.iteration = iteration
         self.videos = {}
 
@@ -97,7 +97,7 @@ class Checkpoint():
         with gzip.open(fname, 'rb') as fp:
             ckpt = pickle.load(fp)
         return ckpt
-    
+
     def save(self, fname):
         self.fname = fname
         with gzip.open(fname, 'wb') as fp:
@@ -129,41 +129,41 @@ class Checkpoint():
 
         return M
 
-    def _joint_metrics(self, gt_list, pred_list):
-        M = OrderedDict()
+    # def _joint_metrics(self, gt_list, pred_list):
+    #     M = OrderedDict()
 
-        # framewise accuracy
-        gt_ = np.concatenate(gt_list)
-        pred_ = np.concatenate(pred_list)
+    #     # framewise accuracy
+    #     gt_ = np.concatenate(gt_list)
+    #     pred_ = np.concatenate(pred_list)
 
-        correct = (gt_ == pred_)
-        fg_loc = np.array([ True if g not in self.bg_class else False for g in gt_ ])
-        M['AccB'] = correct.mean() * 100 # accuracy including background frames
-        M['Acc'] = correct[fg_loc].mean() * 100 # accuracy without background frames
+    #     correct = (gt_ == pred_)
+    #     fg_loc = np.array([ True if g not in self.bg_class else False for g in gt_ ])
+    #     M['AccB'] = correct.mean() * 100 # accuracy including background frames
+    #     M['Acc'] = correct[fg_loc].mean() * 100 # accuracy without background frames
 
-        # F1-Score
-        overlap = [.1, .25, .5]
-        tp, fp, fn = np.zeros(3), np.zeros(3), np.zeros(3)
+    #     # F1-Score
+    #     overlap = [.1, .25, .5]
+    #     tp, fp, fn = np.zeros(3), np.zeros(3), np.zeros(3)
 
-        for gt, pred in zip(gt_list, pred_list):
-            gt_segs = parse_label(gt)
-            pred_segs = parse_label(pred)
-            for s in range(len(overlap)):
-                tp1, fp1, fn1 = f_score(pred_segs, gt_segs, overlap[s], bg_class=self.bg_class)
-                tp[s] += tp1
-                fp[s] += fp1
-                fn[s] += fn1
+    #     for gt, pred in zip(gt_list, pred_list):
+    #         gt_segs = parse_label(gt)
+    #         pred_segs = parse_label(pred)
+    #         for s in range(len(overlap)):
+    #             tp1, fp1, fn1 = f_score(pred_segs, gt_segs, overlap[s], bg_class=self.bg_class)
+    #             tp[s] += tp1
+    #             fp[s] += fp1
+    #             fn[s] += fn1
 
-        for s in range(len(overlap)):
-            precision = tp[s] / float(tp[s]+fp[s]+1e-5)
-            recall = tp[s] / float(tp[s]+fn[s]+1e-5)
-            f1 = 2.0 * (precision*recall) / (precision+recall+1e-5)
-            f1 = np.nan_to_num(f1)*100
-            M['F1@%0.2f' % overlap[s]] = f1
+    #     for s in range(len(overlap)):
+    #         precision = tp[s] / float(tp[s]+fp[s]+1e-5)
+    #         recall = tp[s] / float(tp[s]+fn[s]+1e-5)
+    #         f1 = 2.0 * (precision*recall) / (precision+recall+1e-5)
+    #         f1 = np.nan_to_num(f1)*100
+    #         M['F1@%0.2f' % overlap[s]] = f1
 
-        return M
+    #     return M
 
-    def compute_metrics(self):
+    def compute_metrics_old(self):
 
         gt_list, pred_list = [], [] 
         for vname, video in self.videos.items():
@@ -178,3 +178,76 @@ class Checkpoint():
         self.metrics.update(m)
 
         return self.metrics
+
+    def compute_metrics(self):
+
+        gt_list, pred_list = [], [] 
+        for vname, video in self.videos.items():
+            video.pred_label = expand_frame_label(video.pred, len(video.gt_label)) # adjust for downsampling
+            video.metrics = self._per_video_metrics(video.gt_label, video.pred_label)
+            gt_list.append(video.gt_label)
+            pred_list.append(video.pred_label)
+
+        metrics = [ video.metrics for video in self.videos.values() ]
+        self.metrics = easy_reduce(metrics, skip_nan=True)
+
+        # Video-Level Accuracyの計算
+        video_level_accuracies = []
+        for video in self.videos.values():
+            correct_predictions = (np.array(video.gt_label) == np.array(video.pred_label)).sum()
+            video_level_accuracy = correct_predictions / len(video.gt_label)
+            video_level_accuracies.append(video_level_accuracy)
+        self.video_level_accuracy = np.mean(video_level_accuracies) * 100
+        self.metrics['Video_Level_Accuracy'] = self.video_level_accuracy
+
+        # Phase-Level Metricsの計算
+        all_gt = np.concatenate(gt_list)
+        all_pred = np.concatenate(pred_list)
+
+        # ラベルのリストを作成 (背景クラスを除く)
+        labels = np.unique(all_gt)
+        labels = [label for label in labels if label not in self.bg_class]  # 背景クラスを除外
+
+        phase_level_metrics = self._phase_level_metrics(all_gt, all_pred, labels)
+        macro_level_metrics = self._macro_level_metrics(phase_level_metrics, labels)
+        self.metrics.update(macro_level_metrics)
+
+        # Final Rank Scoreの計算
+        self.macro_f1 = macro_level_metrics['Macro_F1']
+        self.rank_score = (self.video_level_accuracy + self.macro_f1) / 2  # または定義に従って計算
+        self.metrics['Rank_Score'] = self.rank_score
+
+        return self.metrics
+
+    def _phase_level_metrics(self, gt, pred, labels):
+        M = OrderedDict()
+        for label in labels:
+            tp = np.sum((gt == label) & (pred == label))
+            fp = np.sum((gt != label) & (pred == label))
+            fn = np.sum((gt == label) & (pred != label))
+
+            precision = tp / (tp + fp + 1e-5)
+            recall = tp / (tp + fn + 1e-5)
+            f1 = 2 * precision * recall / (precision + recall + 1e-5)
+
+            M[f'Precision_{label}'] = precision * 100
+            M[f'Recall_{label}'] = recall * 100
+            M[f'F1_{label}'] = f1 * 100
+        return M
+
+    def _macro_level_metrics(self, phase_level_metrics, labels):
+        M = OrderedDict()
+        precisions = []
+        recalls = []
+        f1s = []
+
+        for label in labels:
+            precisions.append(phase_level_metrics[f'Precision_{label}'])
+            recalls.append(phase_level_metrics[f'Recall_{label}'])
+            f1s.append(phase_level_metrics[f'F1_{label}'])
+        
+        M['Macro_Precision'] = np.mean(precisions) if precisions else 0
+        M['Macro_Recall'] = np.mean(recalls) if recalls else 0
+        M['Macro_F1'] = np.mean(f1s) if f1s else 0
+
+        return M

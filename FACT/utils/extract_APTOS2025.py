@@ -6,6 +6,7 @@ from PIL import Image
 from tqdm import tqdm
 import torch
 import clip
+import pandas as pd
 
 # CLIPモデル読み込み
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -74,44 +75,78 @@ def process_video_folder(input_dir, output_dir, target_fps=15, max_frames=None):
         except Exception as e:
             print(f"Error processing {video_path}: {e}")
 
-def generate_frame_labels_from_csv(feature_dir, annotation_dir, output_dir, target_fps=15):
+def generate_groundtruth_from_csv(
+    annotation_csv,
+    feature_dir,
+    output_dir,
+    target_fps=15,
+    label_column="phase_id",
+    background_label="17"
+):
     os.makedirs(output_dir, exist_ok=True)
 
-    feature_files = [f for f in os.listdir(feature_dir) if f.endswith('.npy')]
-    
-    for fname in tqdm(feature_files):
-        video_id = os.path.splitext(fname)[0]
-        feature_path = os.path.join(feature_dir, fname)
-        csv_path = os.path.join(annotation_dir, f"{video_id}.csv")
-        out_path = os.path.join(output_dir, f"{video_id}.txt")
+    # 全アノテーション読み込み
+    df = pd.read_csv(annotation_csv)
 
-        # 1. フレーム数を取得
+    # 各動画ごとに処理
+    video_ids = df['video_id'].unique()
+
+    for vid in tqdm(video_ids):
+        feature_path = os.path.join(feature_dir, f"{vid}.npy")
+        output_path = os.path.join(output_dir, f"{vid}.txt")
+
+        if not os.path.exists(feature_path):
+            print(f"Warning: feature not found for {vid}")
+            continue
+
         features = np.load(feature_path)
         num_frames = features.shape[0]
+        frame_times = np.arange(num_frames) / target_fps
 
-        # 2. 各フレームに対応する秒数を計算
-        frame_times = np.arange(num_frames) / target_fps  # 秒単位
+        # 対応するラベルデータを抽出
+        df_vid = df[df['video_id'] == vid]
 
-        # 3. アノテーションCSVを読み込む（start, end, label）
-        df = pd.read_csv(csv_path)
+        # ラベル付け
         labels = []
-
         for t in frame_times:
-            matched = df[(df['start'] <= t) & (df['end'] > t)]
-            if len(matched) > 0:
-                labels.append(matched.iloc[0]['label'])
+            row = df_vid[(df_vid['start'] <= t) & (df_vid['end'] > t)]
+            if len(row) > 0:
+                label = str(row.iloc[0][label_column])
             else:
-                labels.append('background')  # or unknown class
+                label = background_label
+            labels.append(label)
 
-        # 4. 書き出し
-        with open(out_path, 'w') as f:
+        # 書き出し
+        with open(output_path, "w") as f:
             for label in labels:
                 f.write(f"{label}\n")
 
-        # optional log
-        print(f"{video_id}: {num_frames} frames → {out_path}")
+        print(f"{vid}: {num_frames} frames written to {output_path}")
 
 # 実行設定
-input_video_folder = "videos"         # 動画が入っているフォルダ
-output_feature_folder = "features"    # .npyを保存するフォルダ
+input_video_folder = "input/APTOS2025/videos"
+output_feature_folder = "FACT/data/APTOS2025/features"
+annotation_path = "input\APTOS2025\APTOS_train-val_annotation.csv"
+label_path = "FACT\data\APTOS2025\groundTruth"
 process_video_folder(input_video_folder, output_feature_folder, target_fps=15)
+generate_groundtruth_from_csv(output_feature_folder,annotation_path,label_path,target_fps=15)
+
+import pandas as pd
+from sklearn.model_selection import KFold
+
+# アノテーションファイルからユニークな video_id を抽出
+df = pd.read_csv(annotation_path)
+video_ids = df["video_id"].unique()
+
+# 5-fold CV の準備
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+for fold, (train_idx, test_idx) in enumerate(kf.split(video_ids), 1):
+    train_ids = video_ids[train_idx]
+    test_ids = video_ids[test_idx]
+    
+    # 書き出し
+    with open(f"FACT/data/APTOS2025/splits/train.split{fold}.bundle", "w") as f:
+        f.writelines(f"{vid}\n" for vid in train_ids)
+    with open(f"FACT/data/APTOS2025/splits/test.split{fold}.bundle", "w") as f:
+        f.writelines(f"{vid}\n" for vid in test_ids)

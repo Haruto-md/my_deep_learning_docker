@@ -1,0 +1,35 @@
+Non-functional_Segment 17
+Step_Interval 26
+Anterior_Chamber_Gas_Injection 0
+Anterior_Chamber Injection/Washing 1
+Anterior_Chamber Washing 2
+Anterior_Vitrectomy 3
+Capsular_Membrane_Staining 4
+Capsulorhexis 5
+Conjunctival_Incision_Creation 6
+Corneal_Incision_Creation 7
+Corneal_Measurement 8
+Corneal-Scleral_Tunnel_Creation 9
+Cortex_Aspiration 10
+Goniotomy 11
+Hydrodissection-Hydrodelineation 12
+Incision_Closure 13
+Intraocular_Lens_Implantation 14
+Intraoperative_Gonioscopy_Application 15
+Iris_Prolapse_Management 16
+Nuclear_Management 18
+Ocular_Surface_Irrigation 19
+Peripheral_Iridectomy 21
+Placement_of_Bandage_Contact_Lens 22
+Placement_of_Eyelid_Speculum 23
+Pupil_ilation 24
+Scleral_Hemostasis 25
+Subconjunctival_Drug_Injection 27
+Surgical_Marking 28
+Suspension_Suture 29
+Swab_Wiping 30
+Use_of_Iris_Expander 31
+Viscoelastic_Application_on_Cornea 32
+Viscoelastic_Aspiration 33
+Viscoelastic_Injection 34
+Others 20
